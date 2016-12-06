@@ -26,6 +26,16 @@ def possible_food(food_type):
     return decorator_factory
 
 
+def singleton(cls):
+    instances = {}
+    @functools.wraps(cls)
+    def getinstance():
+        if cls not in instances:
+            instances[cls] = cls()
+        return instances[cls]
+    return getinstance
+
+
 class Inhabitant:
     def __init__(self, type, weight):
         self.type = type
@@ -68,42 +78,45 @@ class Alga(Inhabitant):
         super().__init__('alga', weight)
 
 
-def singleton(cls):
-    instances = {}
-    @functools.wraps(cls)
-    def getinstance():
-        if cls not in instances:
-            instances[cls] = cls()
-        return instances[cls]
-    return getinstance
-
-
 @singleton
 class Aquarium:
     def __init__(self):
         self.aquarium = []
 
-    def get_inhabitant(self, inhabitants):
+    def get_inhabitants(self, inhabitants):
         for inhabitant in inhabitants:
             self.aquarium.append(inhabitant)
+
+    def give_random_except_self(self, current):
+        while True:
+            inhabitant = random.choice(self.aquarium)
+            if inhabitant is not current:
+                break
+        return inhabitant
+
+    def start(self):
+        while any(type(x).__name__ in ["Fish", "Alga"] for x in self.aquarium):
+            for inhabitant in self.aquarium:
+                food = self.give_random_except_self(inhabitant)
+                inhabitant.eating(self.aquarium, food)
+
+    def result(self):
+        print(self.aquarium)
+        self.aquarium.sort(key=lambda x: -x.weight)
+        print(self.aquarium)
+        for item in self.aquarium:
+            print(item.weight)
 
 
 if __name__ == '__main__':
     aquarium = Aquarium()
-    alga = Alga(5)
-    snail = Snail(15)
-    predator = Predator(13)
-    fish = Fish(100)
-    aquarium.get_inhabitant([fish, snail, predator, alga])
-    print(aquarium.aquarium)
-
-    print(fish.weight)
-    fish.eating(aquarium.aquarium, alga)
-    print(fish.weight)
-    fish.eating(aquarium.aquarium, snail)
-    print(fish.weight)
-    print(aquarium.aquarium)
-    print(predator.weight)
-    fish.eating(aquarium.aquarium, predator)
-    print(aquarium.aquarium)
-    print(predator.weight)
+    fishes = [Fish(random.randrange(MIN_FISH_WEIGHT, MAX_FISH_WEIGHT + 1)) for i in range(random.randrange(1, 20))]
+    predators = [Predator(PREDATOR_WEIGHT) for i in range(random.randrange(1, 20))]
+    seaweed = [Alga(random.randrange(MIN_ALGA_WEIGHT, MAX_ALGA_WEIGHT + 1)) for i in range(random.randrange(1, 10))]
+    snails = [Snail(random.randrange(MIN_SNAIL_WEIGHT, MAX_SNAIL_WEIGHT + 1)) for i in range(random.randrange(1, 20))]
+    aquarium.get_inhabitants(fishes)
+    aquarium.get_inhabitants(predators)
+    aquarium.get_inhabitants(seaweed)
+    aquarium.get_inhabitants(snails)
+    aquarium.start()
+    aquarium.result()
