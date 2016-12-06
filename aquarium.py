@@ -18,10 +18,10 @@ def possible_food(food_type):
     def decorator_factory(f):
         @functools.wraps(f)
         def wrapper(self, aquarium, food):
-            if food_type == type(food).__name__:
+            if food_type == food.__class__.__name__:
                 return f(self, aquarium, food)
-            if (type(self).__name__ == 'Fish'
-                    and type(food).__name__ == 'Predator'):
+            if (self.__class__.__name__ == 'Fish'
+                    and food.__class__.__name__ == 'Predator'):
                 food.eating(aquarium, self)
         return wrapper
     return decorator_factory
@@ -99,15 +99,16 @@ class Aquarium:
         return inhabitant
 
     def start(self):
-        while any(type(x).__name__ in ["Fish", "Alga"] for x in self.aquarium):
+        while any(x.__class__.__name__ in ["Fish", "Alga"]
+                  for x in self.aquarium):
             for inhabitant in self.aquarium:
                 food = self.give_random_except_current(inhabitant)
                 inhabitant.eating(self.aquarium, food)
 
     def result(self):
-        self.aquarium.sort(key=lambda x: (type(x).__name__, -x.weight))
+        self.aquarium.sort(key=lambda x: (x.__class__.__name__, -x.weight))
         for item in self.aquarium:
-            name = type(item).__name__
+            name = item.__class__.__name__
             if name == "Predator":
                 print('Хищник - масса:', item.weight, '| съел рыб:', item.ate)
             else:
