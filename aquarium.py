@@ -45,7 +45,10 @@ class Inhabitant:
     def eating(self, aquarium, food):
         self.weight += food.weight
         self.ate += 1
-        aquarium.remove(food)
+        try:
+            aquarium.remove(food)
+        except ValueError:
+            print("Нельзя съесть отсутствующий в аквариуме объект")
 
 
 class Fish(Inhabitant):
@@ -83,6 +86,11 @@ class Alga(Inhabitant):
         pass
 
 
+class TooBigAquarium(Exception):
+    """Raised when aquarium is too big"""
+    pass
+
+
 @singleton
 class Aquarium:
     def __init__(self):
@@ -90,7 +98,12 @@ class Aquarium:
 
     def get_inhabitants(self, inhabitants):
         for inhabitant in inhabitants:
-            self.aquarium.append(inhabitant)
+            try:
+                self.aquarium.append(inhabitant)
+                if len(self.aquarium) > 100:
+                    raise TooBigAquarium
+            except TooBigAquarium:
+                print("Всё пропало! В аквариуме больше ста жителей")
 
     def give_random_except_current(self, current):
         inhabitant = random.choice(self.aquarium)
@@ -110,10 +123,17 @@ class Aquarium:
         for item in self.aquarium:
             name = item.__class__.__name__
             if name == "Predator":
-                print('Хищник - масса:', item.weight, '| съел рыб:', item.ate)
+                try:
+                    print('Хищник - масса:', item.weight,
+                          '| съел рыб:', item.ate)
+                except AttributeError as e:
+                    print(item, e)
             else:
                 text = 'Улитка - масса: {} | съела водорослей: {}'
-                print(text.format(item.weight, item.ate))
+                try:
+                    print(text.format(item.weight, item.ate))
+                except AttributeError:
+                    print(item)
 
 
 def inhabitants_generator():
