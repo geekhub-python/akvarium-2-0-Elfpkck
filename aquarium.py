@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import asyncio
 import functools
 import random
 
@@ -111,12 +112,21 @@ class Aquarium:
             inhabitant = random.choice(self.aquarium)
         return inhabitant
 
-    def start(self):
+    async def start(self):
         while any(x.__class__.__name__ in ["Fish", "Alga"]
                   for x in self.aquarium):
             for inhabitant in self.aquarium:
                 food = self.give_random_except_current(inhabitant)
                 inhabitant.eating(self.aquarium, food)
+                await asyncio.sleep(0)
+
+    async def start2(self):
+        while any(x.__class__.__name__ in ["Fish", "Alga"]
+                  for x in self.aquarium):
+            for inhabitant in self.aquarium:
+                food = self.give_random_except_current(inhabitant)
+                inhabitant.eating(self.aquarium, food)
+                await asyncio.sleep(0)
 
     def result(self):
         self.aquarium.sort(key=lambda x: (x.__class__.__name__, -x.weight))
@@ -154,5 +164,9 @@ if __name__ == '__main__':
     aquarium = Aquarium()
     for inhabitants in inhabitants_generator():
         aquarium.get_inhabitants(inhabitants)
-    aquarium.start()
+    loop = asyncio.get_event_loop()
+    tasks = [
+        aquarium.start(),
+        aquarium.start2()]
+    loop.run_until_complete(asyncio.wait(tasks))
     aquarium.result()
