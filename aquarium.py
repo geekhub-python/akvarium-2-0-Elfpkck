@@ -1,98 +1,16 @@
 #!/usr/bin/env python3
 
 import asyncio
-import functools
+import json
 import random
+from utils import TooBigAquarium
 
-MIN_FISH_WEIGHT = 1
-MAX_FISH_WEIGHT = 9
-MIN_SNAIL_WEIGHT = 1
-MAX_SNAIL_WEIGHT = 5
-MIN_ALGA_WEIGHT = 1
-MAX_ALGA_WEIGHT = 3
-PREDATOR_WEIGHT = 10
-MIN_INHABITANTS = 20
-MAX_INHABITANTS = 100
+with open("config.json") as f:
+    config = json.load(f)
+
+MAX_INHABITANTS = config["MAX_INHABITANTS"]
 
 
-def possible_food(food_type):
-    def decorator_factory(f):
-        @functools.wraps(f)
-        def wrapper(self, aquarium, food):
-            if food_type == food.__class__.__name__:
-                return f(self, aquarium, food)
-            if (self.__class__.__name__ == 'Fish'
-                    and food.__class__.__name__ == 'Predator'):
-                food.eating(aquarium, self)
-        return wrapper
-    return decorator_factory
-
-
-def singleton(cls):
-    instances = {}
-    @functools.wraps(cls)
-    def getinstance():
-        if cls not in instances:
-            instances[cls] = cls()
-        return instances[cls]
-    return getinstance
-
-
-class Inhabitant:
-    def __init__(self, weight):
-        self.weight = weight
-        self.ate = 0
-
-    def eating(self, aquarium, food):
-        self.weight += food.weight
-        self.ate += 1
-        try:
-            aquarium.remove(food)
-        except ValueError:
-            print("Нельзя съесть отсутствующий в аквариуме объект")
-
-
-class Fish(Inhabitant):
-    def __init__(self, weight):
-        super().__init__(weight)
-
-    @possible_food('Alga')
-    def eating(self, aquarium, food):
-        return super().eating(aquarium, food)
-
-
-class Predator(Inhabitant):
-    def __init__(self, weight):
-        super().__init__(weight)
-
-    @possible_food('Fish')
-    def eating(self, aquarium, food):
-        return super().eating(aquarium, food)
-
-
-class Snail(Inhabitant):
-    def __init__(self, weight):
-        super().__init__(weight)
-
-    @possible_food('Alga')
-    def eating(self, aquarium, food):
-        return super().eating(aquarium, food)
-
-
-class Alga(Inhabitant):
-    def __init__(self, weight):
-        super().__init__(weight)
-
-    def eating(self, aquarium, food):
-        pass
-
-
-class TooBigAquarium(Exception):
-    """Raised when aquarium is too big"""
-    pass
-
-
-@singleton
 class Aquarium:
     def __init__(self):
         self.aquarium = []
@@ -101,7 +19,7 @@ class Aquarium:
         for inhabitant in inhabitants:
             try:
                 self.aquarium.append(inhabitant)
-                if len(self.aquarium) > 100:
+                if len(self.aquarium) > MAX_INHABITANTS:
                     raise TooBigAquarium
             except TooBigAquarium:
                 print("Всё пропало! В аквариуме больше ста жителей")
@@ -145,28 +63,4 @@ class Aquarium:
                 except AttributeError:
                     print(item)
 
-
-def inhabitants_generator():
-    fishes = [Fish(random.randrange(MIN_FISH_WEIGHT, MAX_FISH_WEIGHT + 1))
-              for i in range(random.randrange(1, 25))]
-    predators = [Predator(PREDATOR_WEIGHT)
-                 for i in range(random.randrange(1, 25))]
-    seaweed = [Alga(random.randrange(MIN_ALGA_WEIGHT, MAX_ALGA_WEIGHT + 1))
-               for i in range(random.randrange(1, 25))]
-    snails = [Snail(random.randrange(MIN_SNAIL_WEIGHT, MAX_SNAIL_WEIGHT + 1))
-              for i in range(random.randrange(1, 25))]
-    if sum(map(len, [fishes, predators, seaweed, snails])) < 20:
-        return inhabitants_generator()
-    return fishes, predators, seaweed, snails
-
-
-if __name__ == '__main__':
-    aquarium = Aquarium()
-    for inhabitants in inhabitants_generator():
-        aquarium.get_inhabitants(inhabitants)
-    loop = asyncio.get_event_loop()
-    tasks = [
-        aquarium.start(),
-        aquarium.start2()]
-    loop.run_until_complete(asyncio.wait(tasks))
-    aquarium.result()
+aquarium = Aquarium()
