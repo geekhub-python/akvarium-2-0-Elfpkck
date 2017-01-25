@@ -1,10 +1,12 @@
 import asyncio
 import json
+import os
 import random
 from aquarium import aquarium
 from inhabitants import Fish, Predator, Alga, Snail
 
-with open("config.json") as f:
+this_dir = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(this_dir, "config.json")) as f:
     config = json.load(f)
 
 MIN_FISH_WEIGHT = config["MIN_FISH_WEIGHT"]

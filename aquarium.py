@@ -2,10 +2,12 @@
 
 import asyncio
 import json
+import os
 import random
 from utils import TooBigAquarium
 
-with open("config.json") as f:
+this_dir = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(this_dir, "config.json")) as f:
     config = json.load(f)
 
 MAX_INHABITANTS = config["MAX_INHABITANTS"]
